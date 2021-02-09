@@ -1,5 +1,6 @@
 #include "Camera.h"
 #include "Rotation.h"
+#include "KalmanFilter.h"
 
 //MATRIX SPECIFIC FOR CUSTOM PANELS
 #include "TemporaryObjCamera.h"
@@ -8,7 +9,11 @@
 //TEENSY SPECIFIC FOR WRITING TO LEDS
 #include <OctoWS2811.h>
 
-const int ledsPerStrip = 306;
+int matrixWidth = 16;
+int matrixHeight = 16;
+float matrixPixelDistance = 8.0f;
+
+const int ledsPerStrip = 256;
 DMAMEM int displayMemory[ledsPerStrip * 6];
 int drawingMemory[ledsPerStrip * 6];
 const int config = WS2811_GRB | WS2811_800kHz;
@@ -16,35 +21,48 @@ OctoWS2811 leds(ledsPerStrip, displayMemory, drawingMemory, config);
 //END TEENSY SPECIFIC FOR WRITING TO LEDS
 
 Light lights[6];
-Object3D* objects[1];
-Object3D dvdObj = Object3D(dvd, 100, 100);
+Object3D* objects[8];
+Object3D noseObj1 = Object3D(noseString, 10, 10);
+Object3D eyeObj1 = Object3D(eyeString, 10, 10);
+Object3D eyeBrowObj1 = Object3D(eyeBrowString, 10, 10);
+Object3D mouthObj1 = Object3D(mouthString, 10, 10);
+Object3D noseObj2 = Object3D(noseString, 10, 10);
+Object3D eyeObj2 = Object3D(eyeString, 10, 10);
+Object3D eyeBrowObj2 = Object3D(eyeBrowString, 10, 10);
+Object3D mouthObj2 = Object3D(mouthString, 10, 10);
 Scene* scene;
-Camera camFrontTop = Camera(Vector3D(-45, 0, 180), Vector3D(90, -220, -500), 306, &pixelString, true, false);
-Camera camRearTop = Camera(Rotation(EulerAngles(Vector3D(45, 0, 0), EulerConstants::EulerOrderXYZR)).GetQuaternion(), Vector3D(90, 90, -500), 306, &pixelString, false, false);
-Camera camFrontBottom = Camera(Rotation(EulerAngles(Vector3D(0, 0, 0), EulerConstants::EulerOrderXYZR)).GetQuaternion(), Vector3D(-5, 0, -500), 306, &pixelString, true, false);
-Camera camRearBottom = Camera(Rotation(EulerAngles(Vector3D(0, 0, 180), EulerConstants::EulerOrderXYZR)).GetQuaternion(), Vector3D(-20, -131, -500), 306, &pixelString, false, false);
+
+Camera squareMatrix = Camera(Vector3D(0, 0, 0), Vector3D(0, 0, -500),  256, &squareString, false, false);//matrixWidth, matrixHeight, matrixPixelDistance);
 
 void setup() {
   leds.begin();
   leds.show();
 
   Serial.begin(115200);
-  Serial.println();
   Serial.println("Starting...");
 
-  lights[0].Set(Vector3D(1000, 0, 0), Vector3D(255, 0, 0), 1000.0f, 0.5f, 0.5f);//Set lights position, color intensity, falloff distance, and falloff curvature
-  lights[1].Set(Vector3D(0, 1000, 0), Vector3D(0, 255, 0), 1000.0f, 0.5f, 0.5f);
-  lights[2].Set(Vector3D(0, 0, 1000), Vector3D(0, 0, 255), 1000.0f, 0.5f, 0.5f);
+  Serial.println("Setting lights...");
+  lights[0].Set(Vector3D(1000, 0, 0), Vector3D(255, 0, 40), 1000.0f, 0.5f, 0.5f);//Set lights position, color intensity, falloff distance, and falloff curvature
+  lights[1].Set(Vector3D(0, 1000, 0), Vector3D(0, 255, 40), 1000.0f, 0.5f, 0.5f);
+  lights[2].Set(Vector3D(0, 0, 1000), Vector3D(40, 0, 255), 1000.0f, 0.5f, 0.5f);
   lights[3].Set(Vector3D(-1000, 0, 0), Vector3D(120, 0, 120), 1000.0f, 0.5f, 0.5f);
   lights[4].Set(Vector3D(0, -1000, 0), Vector3D(120, 120, 0), 1000.0f, 0.5f, 0.5f);
   lights[5].Set(Vector3D(0, 0, -1000), Vector3D(0, 120, 120), 1000.0f, 0.5f, 0.5f);
 
-  Serial.println("Linking objects: ");
-  objects[0] = &dvdObj;
+  Serial.println("Linking objects...");
+  objects[0] = &noseObj1;
+  objects[1] = &eyeObj1;
+  objects[2] = &eyeBrowObj1;
+  objects[3] = &mouthObj1;
+  objects[4] = &noseObj2;
+  objects[5] = &eyeObj2;
+  objects[6] = &eyeBrowObj2;
+  objects[7] = &mouthObj2;
 
-  scene = new Scene(objects, lights, 1, 6);
-  Serial.println("Objects linked, scene created: ");
-  delay(50);
+  Serial.println("Creating scene...");
+  scene = new Scene(objects, lights, 8, 6);
+  
+  Serial.println("Beginning render...");
 }
 
 void loop() {
@@ -53,54 +71,88 @@ void loop() {
     Serial.print(i);
     Serial.print(" of 720 at ");
 
-    //Example of DVD 3D object scaling, moving, and rotating
+    //Example of Face with slight movement, scaling, and rotation
     //Objects visibility can be enabled and disabled at any point before rasterizing to change its visibility
     objects[0]->Enable();
+    objects[1]->Enable();
+    objects[2]->Enable();
+    objects[3]->Enable();
+    objects[4]->Enable();
+    objects[5]->Enable();
+    objects[6]->Enable();
+    objects[7]->Enable();
 
     //Resets the object back to the original state before any translates/modifications, must be ran once per loop in most cases
     objects[0]->ResetVertices();
+    objects[1]->ResetVertices();
+    objects[2]->ResetVertices();
+    objects[3]->ResetVertices();
+    objects[4]->ResetVertices();
+    objects[5]->ResetVertices();
+    objects[6]->ResetVertices();
+    objects[7]->ResetVertices();
 
-    //Objects can be scaled by origin, center, and at a point
-    objects[0]->Scale(Vector3D(1.3f + sin(i * 3.14159f / 180.0f * 3.0f) * 0.3f, 1.3f + sin(i * 3.14159f / 180.0f * 3.0f) * 0.3f, 1.0f), Vector3D(0, 0, 0));
-    
     //Objects can be moved to a coordinate or translated by a vector
-    objects[0]->Move(Vector3D(-100 + sin(i * 3.14159f / 180.0f * 3.0f) * 100.0f, 60 + cos(i * 3.14159f / 180.0f * 1.5f) * 100.0f, 0.0f));
+    objects[0]->Move(Vector3D(-50, 0, 50.0f));
+    objects[1]->Move(Vector3D(-100, 0, 50.0f));
+    objects[2]->Move(Vector3D(50, 0, 50.0f));
+    objects[3]->Move(Vector3D(100, 0, 50.0f));
+    objects[4]->Move(Vector3D(0, 0, -50.0f));
+    objects[5]->Move(Vector3D(0, 0, -50.0f));
+    objects[6]->Move(Vector3D(0, 0, -50.0f));
+    objects[7]->Move(Vector3D(0, 0, -50.0f));
     
     //Objects can be rotated with by any rotation object (quaternion is preferred) and about any coordinate or center
-    objects[0]->Rotate(Vector3D(7 + sinf(i * 3.14159f / 180.0f * 4.0f) * 1.0f, sinf(i * 3.14159f / 180.0f * 2.0f) * 1.0f, sinf(i * 3.14159f / 180.0f * 2.0f) * 1.0f), Vector3D(0, 100, 0));
+    objects[0]->Rotate(Vector3D(sinf(i * 3.14159f / 180.0f * 2.0f) * 1.0f, sinf(i * 3.14159f / 180.0f * 1.0f) * 1.0f, 1), Vector3D(0, 100, 0));
+    objects[1]->Rotate(Vector3D(sinf(i * 3.14159f / 180.0f * 2.0f) * 1.0f, sinf(i * 3.14159f / 180.0f * 1.0f) * 1.0f, 1), Vector3D(0, 100, 0));
+    objects[2]->Rotate(Vector3D(sinf(i * 3.14159f / 180.0f * 1.0f) * 1.0f, sinf(i * 3.14159f / 180.0f * 1.0f) * 1.0f, 1), Vector3D(0, 100, 0));
+    objects[3]->Rotate(Vector3D(sinf(i * 3.14159f / 180.0f * 2.0f) * 1.0f, sinf(i * 3.14159f / 180.0f * 1.0f) * 1.0f, 1), Vector3D(0, 100, 0));
+    objects[4]->Rotate(Vector3D(sinf(i * 3.14159f / 180.0f * 2.0f) * 1.0f, sinf(i * 3.14159f / 180.0f * 1.0f) * 1.0f, -1), Vector3D(0, 100, 0));
+    objects[5]->Rotate(Vector3D(sinf(i * 3.14159f / 180.0f * 2.0f) * 1.0f, sinf(i * 3.14159f / 180.0f * 1.0f) * 1.0f, -1), Vector3D(0, 100, 0));
+    objects[6]->Rotate(Vector3D(sinf(i * 3.14159f / 180.0f * 2.0f) * 1.0f, sinf(i * 3.14159f / 180.0f * 1.0f) * 1.0f, -1), Vector3D(0, 100, 0));
+    objects[7]->Rotate(Vector3D(sinf(i * 3.14159f / 180.0f * 2.0f) * 1.0f, sinf(i * 3.14159f / 180.0f * 1.0f) * 1.0f, -1), Vector3D(0, 100, 0));
 
-    lights[0].MoveTo(Vector3D(sinf(i * 3.14159f / 180.0f * 2.0f) * 1000.0f, 0, -cosf(i * 3.14159f / 180.0f * 2.0f) * 1000.0f));//Lights can be moved to any vector coordinate
+    //Objects can be scaled by origin, center, and at a point
+    float s = 1.0f + sin(i * 3.14159f / 180.0f * 3.0f) * 0.03f;
+    objects[0]->Scale(Vector3D(s, s, s), Vector3D(70, 40, 50));
+    objects[1]->Scale(Vector3D(s, s, s), Vector3D(70, 40, 50));
+    objects[2]->Scale(Vector3D(s, s, s), Vector3D(70, 40, 50));
+    objects[3]->Scale(Vector3D(s, s, s), Vector3D(70, 40, 50));
+    objects[4]->Scale(Vector3D(s, s, s), Vector3D(70, 40, 50));
+    objects[5]->Scale(Vector3D(s, s, s), Vector3D(70, 40, 50));
+    objects[6]->Scale(Vector3D(s, s, s), Vector3D(70, 40, 50));
+    objects[7]->Scale(Vector3D(s, s, s), Vector3D(70, 40, 50));
+    
+    //Lights can be moved to any vector coordinate
     lights[1].MoveTo(Vector3D(sinf(i * 3.14159f / 180.0f * 4.0f) * 1000.0f, -cosf(i * 3.14159f / 180.0f * 4.0f) * 1000.0f, 0));
-    lights[2].MoveTo(Vector3D(0, sinf(i * 3.14159f / 180.0f * 6.0f) * 1000.0f, cosf(i * 3.14159f / 180.0f * 6.0f) * 1000.0f));
     lights[3].MoveTo(Vector3D(-sinf(i * 3.14159f / 180.0f * 2.0f) * 1000.0f, 0, cosf(i * 3.14159f / 180.0f * 2.0f) * 1000.0f));
     lights[4].MoveTo(Vector3D(-sinf(i * 3.14159f / 180.0f * 4.0f) * 1000.0f, cosf(i * 3.14159f / 180.0f * 4.0f) * 1000.0f, 0));
     lights[5].MoveTo(Vector3D(0, sinf(i * 3.14159f / 180.0f * 6.0f) * 1000.0f, -cosf(i * 3.14159f / 180.0f * 6.0f) * 1000.0f));
 
     long prev = micros();//Used to calculate the render time in seconds
 
-    camFrontTop.Rasterize(scene, 1.0f, 20);
-    camRearTop.Rasterize(scene, 1.0f, 20);
-    camFrontBottom.Rasterize(scene, 1.0f, 20);
-    camRearBottom.Rasterize(scene, 1.0f, 20);
+    squareMatrix.Rasterize(scene, 1.0f, 10);
 
     float dif = ((float)(micros() - prev)) / 1000000.0f;
-    prev = micros();
+
+    int count = matrixWidth * matrixHeight;
     
     //TEENSY SPECIFIC FOR WRITING TO LEDS/COPYING TO MEMORY
-    for (int i = 0; i < 306; i++) {
-      leds.setPixel(i,       (byte)camFrontTop.GetPixels()[i].RGB.X, (byte)camFrontTop.GetPixels()[i].RGB.Y, (byte)camFrontTop.GetPixels()[i].RGB.Z);
-      leds.setPixel(i + 306,   (byte)camRearTop.GetPixels()[i].RGB.X, (byte)camRearTop.GetPixels()[i].RGB.Y, (byte)camRearTop.GetPixels()[i].RGB.Z);
-      leds.setPixel(i + 306 * 2, (byte)camFrontBottom.GetPixels()[i].RGB.X, (byte)camFrontBottom.GetPixels()[i].RGB.Y, (byte)camFrontBottom.GetPixels()[i].RGB.Z);
-      leds.setPixel(i + 306 * 3, (byte)camRearBottom.GetPixels()[i].RGB.X, (byte)camRearBottom.GetPixels()[i].RGB.Y, (byte)camRearBottom.GetPixels()[i].RGB.Z);
+    for (int i = 0; i < count; i++) {
+      leds.setPixel(i,             (byte)squareMatrix.GetPixels()[i].RGB.X, (byte)squareMatrix.GetPixels()[i].RGB.Y, (byte)squareMatrix.GetPixels()[i].RGB.Z);
+      leds.setPixel(i + count * 1, (byte)squareMatrix.GetPixels()[i].RGB.X, (byte)squareMatrix.GetPixels()[i].RGB.Y, (byte)squareMatrix.GetPixels()[i].RGB.Z);
+      leds.setPixel(i + count * 2, (byte)squareMatrix.GetPixels()[i].RGB.X, (byte)squareMatrix.GetPixels()[i].RGB.Y, (byte)squareMatrix.GetPixels()[i].RGB.Z);
+      leds.setPixel(i + count * 3, (byte)squareMatrix.GetPixels()[i].RGB.X, (byte)squareMatrix.GetPixels()[i].RGB.Y, (byte)squareMatrix.GetPixels()[i].RGB.Z);
+      leds.setPixel(i + count * 4, (byte)squareMatrix.GetPixels()[i].RGB.X, (byte)squareMatrix.GetPixels()[i].RGB.Y, (byte)squareMatrix.GetPixels()[i].RGB.Z);
+      leds.setPixel(i + count * 5, (byte)squareMatrix.GetPixels()[i].RGB.X, (byte)squareMatrix.GetPixels()[i].RGB.Y, (byte)squareMatrix.GetPixels()[i].RGB.Z);
+      leds.setPixel(i + count * 6, (byte)squareMatrix.GetPixels()[i].RGB.X, (byte)squareMatrix.GetPixels()[i].RGB.Y, (byte)squareMatrix.GetPixels()[i].RGB.Z);
+      leds.setPixel(i + count * 7, (byte)squareMatrix.GetPixels()[i].RGB.X, (byte)squareMatrix.GetPixels()[i].RGB.Y, (byte)squareMatrix.GetPixels()[i].RGB.Z);
     }
 
     leds.show();
     //END TEENSY SPECIFIC FOR WRITING TO LEDS/COPYING TO MEMORY
 
     Serial.print(dif, 5);
-    Serial.print(" ");
-    Serial.print(((float)(micros() - prev)) / 1000000.0f, 5);
     Serial.println(" seconds.");
   }
-
 }

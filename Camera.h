@@ -27,6 +27,7 @@ private:
         if (triangles[t].DidIntersect(pixelRay, &barycentric)) {
           Vector3D tempInt = *triangles[t].t3p1 + (*triangles[t].t3e2 * barycentric.X) + (*triangles[t].t3e1 * barycentric.Y);
           float rayDistanceToTriangle = Vector3D(pixelRay.X + p.X, pixelRay.Y + p.Y, p.Z).CalculateEuclideanDistance(tempInt);
+
           
           if(rayDistanceToTriangle < zBuffer){//closest triangle to ray so far
             zBuffer = rayDistanceToTriangle;
@@ -97,11 +98,13 @@ public:
 		this->p.Y = -p.Y;
 	}
  
-  Camera(Quaternion q, Vector3D p, unsigned int horizontal, unsigned int vertical) {
+  Camera(Quaternion q, Vector3D p, unsigned int horizontal, unsigned int vertical, float distance) {
     pixelStorage = new Pixel[horizontal * vertical];
-    pixelReader.GetPixels(pixelStorage, false, false);
+    pixelReader.GetPixels(pixelStorage, horizontal, vertical, distance);
     
-    pixelPixelDistance = fabs(pixelStorage[0].X - pixelStorage[1].X);
+    pixelPixelDistance = distance;
+
+    this->pixelCount = horizontal * vertical;
     
     this->q = q;
     this->p = p;

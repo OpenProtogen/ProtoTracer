@@ -69,11 +69,19 @@ public:
 		}
 	}
 
-	void GetPixels(Pixel* pixels, int width, int height){
+	void GetPixels(Pixel* pixels, int pixWidth, int pixHeight, float distance){
     int currentPixel = 0;
-		for (int i = 0; i < width; i++) {
-			for (int k = 0; k < height; k++) {
-				pixels[currentPixel] = Pixel(i, k);
+    
+		for (int i = 0; i < pixWidth; i++) {
+			for (int k = 0; k < pixHeight; k++) {
+				pixels[currentPixel] = Pixel(i * distance, k * distance);
+
+        Serial.print("Pixel ");
+        Serial.print(currentPixel);
+        Serial.print(" X: ");
+        Serial.print(pixels[currentPixel].X);
+        Serial.print(" Y: ");
+        Serial.println(pixels[currentPixel].Y);
         currentPixel++;
 			}
 		}
