@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Vector.h>
 #include "Vector3D.h"
 #include "Triangle3D.h"
 
