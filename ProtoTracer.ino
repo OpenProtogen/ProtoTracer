@@ -1,3 +1,4 @@
+
 #include "Camera.h"
 #include "Rotation.h"
 #include "KalmanFilter.h"
@@ -6,15 +7,20 @@
 #include "TemporaryObjCamera.h"
 //END MATRIX SPECIFIC FOR CUSTOM PANELS
 
-//TEENSY SPECIFIC FOR WRITING TO LEDS
-#include <OctoWS2811.h>
+//ESP32 SPECIFIC FOR WRITING TO LEDS
+#define FASTLED_ESP32_I2S
 
-const int ledsPerStrip = 571;
-DMAMEM int displayMemory[ledsPerStrip * 6];
-int drawingMemory[ledsPerStrip * 6];
-const int config = WS2811_GRB | WS2811_800kHz;
-OctoWS2811 leds(ledsPerStrip, displayMemory, drawingMemory, config);
-//END TEENSY SPECIFIC FOR WRITING TO LEDS
+#include <FastLED.h>
+
+#define LED_PIN     23
+#define NUM_LEDS    571
+#define BRIGHTNESS  255
+#define LED_TYPE    WS2811
+#define COLOR_ORDER GRB
+CRGB leds[NUM_LEDS];
+
+#define UPDATES_PER_SECOND 100
+//END ESP32 SPECIFIC FOR WRITING TO LEDS
 
 Light lights[6];
 Object3D* objects[8];
@@ -31,8 +37,9 @@ Scene* scene;
 Camera kaiborgCam3535 = Camera(Vector3D(0, 0, 0), Vector3D(0, 0, -500), 571, &pixelString, false, false);
 
 void setup() {
-  leds.begin();
-  leds.show();
+  delay(1000); // power-up safety delay
+  FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
+  FastLED.setBrightness(BRIGHTNESS);
 
   Serial.begin(115200);
   Serial.println("Starting...");
@@ -129,18 +136,15 @@ void loop() {
 
     kaiborgCam3535.Rasterize(scene, 1.0f, 10);
 
-    float dif = ((float)(micros() - prev)) / 1000000.0f;
     
-    //TEENSY SPECIFIC FOR WRITING TO LEDS/COPYING TO MEMORY
-    for (int i = 0; i < 571; i++) {
-      leds.setPixel(i,           (byte)kaiborgCam3535.GetPixels()[i].RGB.X, (byte)kaiborgCam3535.GetPixels()[i].RGB.Y, (byte)kaiborgCam3535.GetPixels()[i].RGB.Z);
-      leds.setPixel(i + 571,     (byte)kaiborgCam3535.GetPixels()[i].RGB.X, (byte)kaiborgCam3535.GetPixels()[i].RGB.Y, (byte)kaiborgCam3535.GetPixels()[i].RGB.Z);
-      leds.setPixel(i + 571 * 2, (byte)kaiborgCam3535.GetPixels()[i].RGB.X, (byte)kaiborgCam3535.GetPixels()[i].RGB.Y, (byte)kaiborgCam3535.GetPixels()[i].RGB.Z);
-      leds.setPixel(i + 571 * 3, (byte)kaiborgCam3535.GetPixels()[i].RGB.X, (byte)kaiborgCam3535.GetPixels()[i].RGB.Y, (byte)kaiborgCam3535.GetPixels()[i].RGB.Z);
+    //ESP32 SPECIFIC FOR WRITING TO LEDS/COPYING TO MEMORY
+    for( int i = 0; i < NUM_LEDS; ++i) {
+        leds[i] = CRGB((byte)kaiborgCam3535.GetPixels()[i].R, (byte)kaiborgCam3535.GetPixels()[i].G, (byte)kaiborgCam3535.GetPixels()[i].B);
     }
 
-    leds.show();
-    //END TEENSY SPECIFIC FOR WRITING TO LEDS/COPYING TO MEMORY
+    FastLED.show();
+    float dif = ((float)(micros() - prev)) / 1000000.0f;
+    //END ESP32 SPECIFIC FOR WRITING TO LEDS/COPYING TO MEMORY
 
     Serial.print(dif, 5);
     Serial.println(" seconds.");

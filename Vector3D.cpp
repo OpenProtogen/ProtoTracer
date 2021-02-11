@@ -1,9 +1,9 @@
 #include "Vector3D.h"
 
 Vector3D::Vector3D() {
-	this->X = 0.0;
-	this->Y = 0.0;
-	this->Z = 0.0;
+	this->X = 0.0f;
+	this->Y = 0.0f;
+	this->Z = 0.0f;
 }
 
 Vector3D::Vector3D(const Vector3D& vector) {
@@ -20,14 +20,14 @@ Vector3D::Vector3D(float X, float Y, float Z) {
 
 Vector3D Vector3D::Absolute() {
 	return Vector3D{
-		fabs(this->X),
-		fabs(this->Y),
-		fabs(this->Z)
+		(float)fabs(this->X),
+		(float)fabs(this->Y),
+		(float)fabs(this->Z)
 	};
 }
 
 Vector3D Vector3D::Normal() {
-	return Multiply(this->Magnitude() == 0 ? 3.40282e+038f : 1 / this->Magnitude());
+	return Multiply(this->Magnitude() == 0 ? 3.40282e+038f : 1.0f / this->Magnitude());
 }
 
 Vector3D Vector3D::Add(Vector3D vector) {
@@ -91,8 +91,8 @@ Vector3D Vector3D::UnitSphere() {
 	Vector3D vector = Vector3D(this->X, this->Y, this->Z);
 	float length = vector.Magnitude();
 
-	if (length == 1) return vector;
-	if (length == 0) return Vector3D(0, 1, 0);
+	if (length == 1.0f) return vector;
+	if (length == 0.0f) return Vector3D(0.0f, 1.0f, 0.0f);
 
 	return Vector3D {
 		vector.X / length,

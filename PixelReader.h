@@ -58,13 +58,6 @@ public:
         }
 
 				pixels[i] = Pixel(x, y);
-
-        Serial.print("Pixel ");
-        Serial.print(i);
-        Serial.print(" X: ");
-        Serial.print(x);
-        Serial.print(" Y: ");
-        Serial.println(y);
 			}
 		}
 	}

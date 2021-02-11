@@ -12,7 +12,6 @@ public:
 	Vector2D();
 	Vector2D(const Vector2D& vector);
 	Vector2D(float x, float y);
-	Vector2D(Vector3D xy);
 	Vector2D(const Vector3D& vector);
 	Vector2D Absolute();
 	Vector2D Normal();

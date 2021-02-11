@@ -28,6 +28,23 @@ Quaternion::Quaternion(float w, float x, float y, float z) {
 	this->Z = z;
 }
 
+Vector2D Quaternion::RotateVector(Vector2D coordinate) {
+ Quaternion current = Quaternion(this->W, this->X, this->Y, this->Z);
+  Quaternion qv = Quaternion(0, coordinate.X, coordinate.Y, 0);
+  Quaternion qr = current * qv * current.MultiplicativeInverse();
+
+  return Vector2D {
+    qr.X,
+    qr.Y
+  };
+}
+
+Vector2D Quaternion::UnrotateVector(Vector2D coordinate) {
+  Quaternion current = Quaternion(this->W, this->X, this->Y, this->Z);
+
+  return current.Conjugate().RotateVector(coordinate);
+}
+
 Vector3D Quaternion::RotateVector(Vector3D coordinate) {
 	Quaternion current = Quaternion(this->W, this->X, this->Y, this->Z);
 	Quaternion qv = Quaternion(0, coordinate.X, coordinate.Y, coordinate.Z);
@@ -172,10 +189,10 @@ Quaternion Quaternion::Power(Quaternion exponent) {
 
 	return Quaternion
 	{
-		pow(current.W, exponent.W),
-		pow(current.X, exponent.X),
-		pow(current.Y, exponent.Y),
-		pow(current.Z, exponent.Z)
+		(float)powf(current.W, exponent.W),
+		(float)powf(current.X, exponent.X),
+		(float)powf(current.Y, exponent.Y),
+		(float)powf(current.Z, exponent.Z)
 	};
 }
 
@@ -184,10 +201,10 @@ Quaternion Quaternion::Power(float exponent) {
 
 	return Quaternion
 	{
-		pow(current.W, exponent),
-		pow(current.X, exponent),
-		pow(current.Y, exponent),
-		pow(current.Z, exponent)
+		(float)powf(current.W, exponent),
+		(float)powf(current.X, exponent),
+		(float)powf(current.Y, exponent),
+		(float)powf(current.Z, exponent)
 	};
 }
 
@@ -211,10 +228,10 @@ Quaternion Quaternion::Absolute() {
 
 	return Quaternion
 	{
-		fabs(current.W),
-		fabs(current.X),
-		fabs(current.Y),
-		fabs(current.Z)
+		(float)fabs(current.W),
+		(float)fabs(current.X),
+		(float)fabs(current.Y),
+		(float)fabs(current.Z)
 	};
 }
 

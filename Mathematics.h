@@ -14,4 +14,7 @@ public:
 	static bool IsInfinite(float);
 	static bool IsFinite(float);
 	static int Sign(float);
+  static int RoundUpWindow(int value, int multiple);
+
+  static float CosineInterpolation(float, float, float);
 };

@@ -2,16 +2,16 @@
 
 #include "OBJReader.h"
 #include "Quaternion.h"
-#include "Vector3D.h"
+#include "Vector2D.h"
 
-class Object3D {
+class Object2D {
 private:
   Quaternion q = Quaternion(1, 0, 0, 0);
-  Vector3D p = Vector3D(0, 0, 0);
-  Vector3D s = Vector3D(1, 1, 1);
-  Vector3D* verticesOriginal;
-  Vector3D* vertices;
-  Triangle3D* triangles;
+  Vector2D p = Vector2D(0, 0);
+  Vector2D s = Vector2D(1, 1);
+  Vector2D* verticesOriginal;
+  Vector2D* vertices;
+  Triangle2D* triangles;
   Vector3D* triangleVec;
   int vertexLength = 0;
   int triangleLength = 0;
@@ -19,20 +19,20 @@ private:
   bool invert = false;
   
 public:
-  Object3D(const int maxVertices, const int maxTriangles){
-    vertices = new Vector3D[maxVertices];
-    verticesOriginal = new Vector3D[maxVertices];
-    triangles = new Triangle3D[maxTriangles];
+  Object2D(const int maxVertices, const int maxTriangles){
+    vertices = new Vector2D[maxVertices];
+    verticesOriginal = new Vector2D[maxVertices];
+    triangles = new Triangle2D[maxTriangles];
     triangleVec = new Vector3D[maxTriangles];
 
     vertexLength = maxVertices;
     triangleLength = maxTriangles;
   }
 
-  Object3D(String dataset, const int maxVertices, const int maxTriangles){
-    vertices = new Vector3D[maxVertices];
-    verticesOriginal = new Vector3D[maxVertices];
-    triangles = new Triangle3D[maxTriangles];
+  Object2D(String dataset, const int maxVertices, const int maxTriangles){
+    vertices = new Vector2D[maxVertices];
+    verticesOriginal = new Vector2D[maxVertices];
+    triangles = new Triangle2D[maxTriangles];
     triangleVec = new Vector3D[maxTriangles];
 
     OBJReader::GetTriangles(vertices, triangleVec, triangles, &vertexLength, &triangleLength, &dataset, false, false, maxVertices, maxTriangles);
@@ -42,10 +42,10 @@ public:
     }
   }
   
-  Object3D(String dataset, bool flipX, bool flipY, const int maxVertices, const int maxTriangles){
-    vertices = new Vector3D[maxVertices]();
-    verticesOriginal = new Vector3D[maxVertices];
-    triangles = new Triangle3D[maxTriangles];
+  Object2D(String dataset, bool flipX, bool flipY, const int maxVertices, const int maxTriangles){
+    vertices = new Vector2D[maxVertices]();
+    verticesOriginal = new Vector2D[maxVertices];
+    triangles = new Triangle2D[maxTriangles];
     triangleVec = new Vector3D[maxTriangles];
     
     OBJReader::GetTriangles(vertices, triangleVec, triangles, &vertexLength, &triangleLength, &dataset, flipX, flipY, maxVertices, maxTriangles);
@@ -55,11 +55,7 @@ public:
     }
   }
 
-  Object3D(Object3D o1, Object3D o2){
-    
-  }
-
-  ~Object3D(){
+  ~Object2D(){
     delete[] vertices;
     delete[] verticesOriginal;
     delete[] triangles;
@@ -94,19 +90,19 @@ public:
     return Quaternion(q);
   }
 
-  Vector3D GetPosition(){
-    return Vector3D(p);
+  Vector2D GetPosition(){
+    return Vector2D(p);
   }
 
-  Triangle3D* GetTriangles(){
+  Triangle2D* GetTriangles(){
     return triangles;
   }
 
-  Vector3D* GetVertices(){
+  Vector2D* GetVertices(){
     return vertices;
   }
 
-  Vector3D* GetVerticesOriginal(){
+  Vector2D* GetVerticesOriginal(){
     return verticesOriginal;
   }
 
@@ -124,8 +120,8 @@ public:
     }
   }
   
-  Vector3D GetVertexCenter(){
-    Vector3D center;
+  Vector2D GetVertexCenter(){
+    Vector2D center;
     
     for(int i = 0; i < vertexLength; i++){
       center = center + vertices[i];
@@ -144,7 +140,7 @@ public:
     }
   }
   
-  void Rotate(Vector3D eAXYZR, Vector3D p) {
+  void Rotate(Vector3D eAXYZR, Vector2D p) {
     Quaternion q = Rotation(EulerAngles(eAXYZR, EulerConstants::EulerOrderXYZR)).GetQuaternion();
     
     this->q = Quaternion(q);
@@ -154,7 +150,7 @@ public:
     }
   }
   
-  void Rotate(Quaternion q, Vector3D p) {
+  void Rotate(Quaternion q, Vector2D p) {
     this->q = Quaternion(q);
 
     for (int i = 0; i < vertexLength; i++) {
@@ -169,28 +165,28 @@ public:
   void RotateCenter(Vector3D v){
     Rotate(v, GetVertexCenter());
   }
-
-  void Scale(Vector3D s){
-    this->s = Vector3D(s);
+  
+  void Scale(Vector2D s){
+    this->s = Vector2D(s);
     
     for (int i = 0; i < vertexLength; i++) {
       vertices[i] = (vertices[i]) / this->s;
     }
   }
   
-  void Scale(Vector3D s, Vector3D p) {
-    this->s = Vector3D(s);
+  void Scale(Vector2D s, Vector2D p) {
+    this->s = Vector2D(s);
     
     for (int i = 0; i < vertexLength; i++) {
       vertices[i] = (vertices[i] - p) * this->s + p;
     }
   }
 
-  void ScaleCenter(Vector3D s){
+  void ScaleCenter(Vector2D s){
     Scale(s, GetVertexCenter());
   }
   
-  void Translate(Vector3D p) {
+  void Translate(Vector2D p) {
     this->p = this->p + p;
     
     for (int i = 0; i < vertexLength; i++) {
@@ -198,7 +194,7 @@ public:
     }
   }
 
-  void Move(Vector3D p){
+  void Move(Vector2D p){
     for (int i = 0; i < vertexLength; i++) {
       vertices[i] = vertices[i] + p;
     }

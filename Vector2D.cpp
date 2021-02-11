@@ -15,11 +15,6 @@ Vector2D::Vector2D(float X, float Y) {
 	this->Y = Y;
 }
 
-Vector2D::Vector2D(Vector3D xy) {
-	this->X = xy.X;
-	this->Y = xy.Y;
-}
-
 Vector2D::Vector2D(const Vector3D& vector) {
 	this->X = vector.X;
 	this->Y = vector.Y;
@@ -27,8 +22,8 @@ Vector2D::Vector2D(const Vector3D& vector) {
 
 Vector2D Vector2D::Absolute() {
 	return Vector2D{
-		abs(this->X),
-		abs(this->Y)
+		(float)fabs(this->X),
+		(float)fabs(this->Y)
 	};
 }
 

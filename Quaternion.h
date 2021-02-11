@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Mathematics.h"
+#include "Vector2D.h"
 #include "Vector3D.h"
 
 typedef struct Quaternion {
@@ -15,6 +16,8 @@ public:
 	Quaternion(Vector3D vector);
 	Quaternion(float W, float X, float Y, float Z);
 
+  Vector2D RotateVector(Vector2D coordinate);
+  Vector2D UnrotateVector(Vector2D coordinate);
 	Vector3D RotateVector(Vector3D coordinate);
 	Vector3D UnrotateVector(Vector3D coordinate);
 	Vector3D GetBiVector();
